@@ -1,9 +1,8 @@
-package Test::NoXS;
-
 use strict;
-$Test::NoXS::VERSION = "1.01";
-
-# use warnings; # only for Perl >= 5.6
+use warnings;
+package Test::NoXS;
+# ABSTRACT: Prevent a module from loading its XS code
+our $VERSION = '1.02'; # VERSION
 
 my @no_xs_modules;
 my $no_xs_all;
@@ -13,20 +12,22 @@ sub import {
     if  ( grep { /:all/ } @_ ) {
       $no_xs_all = 1;
     }
-    else { 
+    else {
       push @no_xs_modules, @_;
     }
 }
-    
+
 # Overload DynaLoader and XSLoader to fake lack of XS for designated modules
 {
     no strict 'refs';
+    no warnings 'redefine';
     local $^W;
     require DynaLoader;
     my $bootstrap_orig = *{"DynaLoader::bootstrap"}{CODE};
     *DynaLoader::bootstrap = sub {
+        my $caller = @_ ? $_[0] : caller;
         die "XS disabled" if $no_xs_all;
-        die "XS disable for $_[0]" if grep { $_[0] eq $_ } @no_xs_modules;
+        die "XS disable for $caller" if grep { $caller eq $_ } @no_xs_modules;
         goto $bootstrap_orig;
     };
     # XSLoader entered Core in Perl 5.6
@@ -34,33 +35,46 @@ sub import {
         require XSLoader;
         my $xsload_orig = *{"XSLoader::load"}{CODE};
         *XSLoader::load = sub {
+            my $caller = @_ ? $_[0] : caller;
             die "XS disabled" if $no_xs_all;
-            die "XS disable for $_[0]" if grep { $_[0] eq $_ } @no_xs_modules;
+            die "XS disable for $caller" if grep { $caller eq $_ } @no_xs_modules;
             goto $xsload_orig;
         };
     }
 }
-    
 
-1; #this line is important and will help the module return a true value
+
+1;
+
+
+# vim: ts=4 sts=4 sw=4 et:
 
 __END__
+
+=pod
 
 =head1 NAME
 
 Test::NoXS - Prevent a module from loading its XS code
 
+=head1 VERSION
+
+version 1.02
+
 =head1 SYNOPSIS
 
- # Note: XS for Scalar::Util is actually in List::Util
- use Test::NoXS 'List::Util'; 
- 
- eval "use Scalar::Util qw( weaken )";
- 
- like( $@, qr/weak references/i, "Scalar::Util failed to load XS" );
+    use Test::NoXS 'Class::Load::XS';
+    use Module::Implementation;
 
- # Disable all XS loading
- use Test::NoXS ':all';
+    eval "use Class::Load";
+    is(
+        Module::Implementation::implementation_for("Class::Load"),
+        "PP",
+        "Class::Load using PP"
+    );
+
+    # Disable all XS loading
+    use Test::NoXS ':all';
 
 =head1 DESCRIPTION
 
@@ -72,56 +86,38 @@ pure-Perl alternative.
 =head1 USAGE
 
 Modules that should not load XS should be given as a list of arguments to C<use
-Test::NoXS>.  Alternatively, giving ':all' as an argument will disable all 
+Test::NoXS>.  Alternatively, giving ':all' as an argument will disable all
 future attempts to load XS.
 
-=head1 BUGS
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
 
-Please report any bugs or feature requests using the CPAN Request Tracker  web
-interface at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Test-NoXS>
+=head1 SUPPORT
 
-When submitting a bug or request, please include a test-file or a patch to an
-existing test-file that illustrates the bug or desired feature.
+=head2 Bugs / Feature Requests
+
+Please report any bugs or feature requests through the issue tracker
+at L<https://github.com/dagolden/test-noxs/issues>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software.  The code repository is available for
+public review and contribution under the terms of the license.
+
+L<https://github.com/dagolden/test-noxs>
+
+  git clone git://github.com/dagolden/test-noxs.git
 
 =head1 AUTHOR
 
-David A. Golden (DAGOLDEN)
-
-dagolden@cpan.org
-
-http://dagolden.com/
+David Golden <dagolden@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2006-2009 by David A. Golden
+This software is Copyright (c) 2013 by David Golden.
 
-This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
+This is free software, licensed under:
 
-The full text of the license can be found in the
-LICENSE file included with this module.
-
-=head1 DISCLAIMER OF WARRANTY
-
-BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
-
-IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
-RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
-FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+  The Apache License, Version 2.0, January 2004
 
 =cut

@@ -1,19 +1,55 @@
-Test::NoXS - Prevent a module from loading its XS code
+NAME
+    Test::NoXS - Prevent a module from loading its XS code
 
-INSTALLATION 
+VERSION
+    version 1.02
 
-If Module::Build is installed (preferred):
+SYNOPSIS
+        use Test::NoXS 'Class::Load::XS';
+        use Module::Implementation;
 
-    perl Build.PL
-    perl Build
-    perl Build test
-    perl Build install
+        eval "use Class::Load";
+        is(
+            Module::Implementation::implementation_for("Class::Load"),
+            "PP",
+            "Class::Load using PP"
+        );
 
-Otherwise, using a Makefile:
+        # Disable all XS loading
+        use Test::NoXS ':all';
 
-    perl Makefile.PL
-    make
-    make test
-    make install
+DESCRIPTION
+    This modules hijacks DynaLoader and XSLoader to prevent them from
+    loading XS code for designated modules. This is intended to help test
+    how modules react to missing XS, e.g. by dying with a message or by
+    falling back to a pure-Perl alternative.
 
-If you are on a windows box you should use 'nmake' rather than 'make'.
+USAGE
+    Modules that should not load XS should be given as a list of arguments
+    to "use Test::NoXS". Alternatively, giving ':all' as an argument will
+    disable all future attempts to load XS.
+
+SUPPORT
+  Bugs / Feature Requests
+    Please report any bugs or feature requests through the issue tracker at
+    <https://github.com/dagolden/test-noxs/issues>. You will be notified
+    automatically of any progress on your issue.
+
+  Source Code
+    This is open source software. The code repository is available for
+    public review and contribution under the terms of the license.
+
+    <https://github.com/dagolden/test-noxs>
+
+      git clone git://github.com/dagolden/test-noxs.git
+
+AUTHOR
+    David Golden <dagolden@cpan.org>
+
+COPYRIGHT AND LICENSE
+    This software is Copyright (c) 2013 by David Golden.
+
+    This is free software, licensed under:
+
+      The Apache License, Version 2.0, January 2004
+

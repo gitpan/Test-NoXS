@@ -1,21 +1,45 @@
 ---
-name: Test-NoXS
-version: 1.01
+abstract: 'Prevent a module from loading its XS code'
 author:
-  - 'David A. Golden <dagolden@cpan.org>'
-abstract: Prevent a module from loading its XS code
-license: perl
-resources:
-  license: http://dev.perl.org/licenses/
-requires:
-  Fcntl: 0
-  Scalar::Util: 1.01
-  Test::More: 0.45
-provides:
-  Test::NoXS:
-    file: lib/Test/NoXS.pm
-    version: 1.01
-generated_by: Module::Build version 0.33
+  - 'David Golden <dagolden@cpan.org>'
+build_requires:
+  Class::Load::XS: 0
+  ExtUtils::MakeMaker: 0
+  File::Find: 0
+  File::Spec::Functions: 0
+  File::Temp: 0
+  List::Util: 0
+  Module::Implementation: 0
+  Test::More: 0
+configure_requires:
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.300030, CPAN::Meta::Converter version 2.120921'
+license: apache
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
+name: Test-NoXS
+no_index:
+  directory:
+    - t
+    - xt
+    - examples
+    - corpus
+  package:
+    - DB
+provides:
+  Test::NoXS:
+    file: lib/Test/NoXS.pm
+    version: 1.02
+requires:
+  DynaLoader: 0
+  XSLoader: 0
+  perl: 5.006
+  strict: 0
+  warnings: 0
+resources:
+  bugtracker: https://github.com/dagolden/test-noxs/issues
+  homepage: https://metacpan.org/release/Test-NoXS
+  repository: git://github.com/dagolden/test-noxs.git
+version: 1.02
